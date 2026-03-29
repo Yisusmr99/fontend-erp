@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MediaMix",
-  description: "Sistema de gestión MediaMix",
+  title: "Derbancks",
+  description: "Sistema de gestión Derbancks",
 };
 
 export default function RootLayout({
