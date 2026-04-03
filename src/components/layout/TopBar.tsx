@@ -19,8 +19,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ModeSwitch from '../ModeSwitch';
 import { DRAWER_WIDTH, DRAWER_WIDTH_COLLAPSED } from './Sidebar';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/v1';
+import { logout } from '@/lib/api/auth';
 
 interface TopBarProps {
   sidebarOpen: boolean;
@@ -40,10 +39,7 @@ export default function TopBar({ sidebarOpen, onMenuClick }: TopBarProps) {
   const handleLogout = async () => {
     handleClose();
     try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session?.accessToken}` },
-      });
+      await logout(session?.accessToken ?? '');
     } catch {
       // Si falla el backend igual cerramos la sesión local
     }
