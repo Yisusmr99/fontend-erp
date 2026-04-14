@@ -43,6 +43,11 @@ const NAV_ITEMS: NavItem[] = [
     href: '/',
   },
   {
+  label: 'Clientes',
+  icon: <PeopleIcon />,
+  href: '/clientes',
+  },
+  {
     label: 'Usuarios',
     icon: <PeopleIcon />,
     href: '/usuarios',
