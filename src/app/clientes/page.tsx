@@ -181,6 +181,7 @@ function ClientesContent() {
           Nuevo Cliente
         </Button>
       </Box>
+
 <Paper sx={{ 
         height: 'calc(100vh - 200px)', // Reduje el descuento de 250 a 200 para que sea más alta
         width: "100%", 
