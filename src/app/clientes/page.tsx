@@ -2,201 +2,289 @@
 
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/layout/AppLayout";
-import apiClient from "@/lib/apiClient"; 
+import apiClient from "@/lib/apiClient";
 import { 
-  Box, Typography, Paper, TextField, Button, Table, 
-  TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Grid, CircularProgress, Snackbar, Alert, IconButton, Tooltip,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Box, Typography, Paper, CircularProgress, Alert, Button, 
+  IconButton, Dialog, DialogTitle, DialogContent, DialogActions, 
+  TextField, Snackbar 
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { DataGrid, GridColDef, GridPaginationModel } from "@mui/x-data-grid";
+import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 
-export default function ClientesPage() {
-  const [clientes, setClientes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
+function ClientesContent() {
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalRows, setTotalRows] = useState(0);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ 
+    pageSize: 15, 
+    page: 0 
+  });
+
+  // Estados de Modales
+  const [openCreate, setOpenCreate] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
+  
+  const [selectedCliente, setSelectedCliente] = useState<any>(null);
+  const [formData, setFormData] = useState({ 
+    nombres: "", apellidos: "", dpi: "", direccion: "", telefono: "", email: "" 
+  });
+  
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState({ open: false, texto: "", color: "success" as "success" | "error" });
 
-  // Estados para el Modal de Edición
-  const [openEdit, setOpenEdit] = useState(false);
-  const [selectedCliente, setSelectedCliente] = useState<any>(null);
+  const showMsg = (texto: string, color: "success" | "error") => 
+    setMensaje({ open: true, texto, color });
 
-  // --- 1. CARGAR CLIENTES ---
-  const cargarClientes = async () => {
+  // CARGAR CLIENTES (CON EL TOTAL CORREGIDO SEGÚN TU JSON)
+  const loadClientes = async (page: number, pageSize: number) => {
     try {
-      setFetching(true);
-      const res = await apiClient.get("/clientes");
-      const data = res.data?.data?.clientes || [];
-      setClientes(data);
+      setLoading(true);
+      const res = await apiClient.get(`/clientes?page=${page + 1}&per_page=${pageSize}`);
+      
+      // La ruta exacta según tu respuesta es res.data.data
+      const listado = res.data?.data?.clientes || [];
+      // El total real que me mostraste (68) está en meta.total
+      const total = res.data?.data?.meta?.total || 0;
+
+      setClientes(listado);
+      setTotalRows(Number(total));
     } catch (error) {
-      console.error("Error al cargar:", error);
+      showMsg("Error al cargar datos del servidor", "error");
     } finally {
-      setFetching(false);
+      setLoading(false);
     }
   };
 
-  useEffect(() => { cargarClientes(); }, []);
+  useEffect(() => {
+    loadClientes(paginationModel.page, paginationModel.pageSize);
+  }, [paginationModel.page, paginationModel.pageSize]);
 
-  // --- 2. MANEJO DE ERRORES ---
-  const procesarError = (error: any) => {
-    if (error.response?.status === 422) {
-      const errores = error.response.data.errors;
-      return (Object.values(errores)[0] as string[])[0] || "Datos inválidos";
-    }
-    return error.response?.data?.message || "Ocurrió un error";
-  };
-
-  // --- 3. GUARDAR (CREAR) ---
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
+  // CREAR CLIENTE
+  const handleCreate = async () => {
+    setSaving(true);
+    setFormError(null);
+    
     const payload = {
-      nombres: formData.get("nombres"),
-      apellidos: formData.get("apellidos"),
-      dpi: formData.get("dpi"),
-      direccion: formData.get("direccion"),
-      telefono: formData.get("telefono"),
-      correo_electronico: formData.get("email"),
-      estado: true,
+      nombres: formData.nombres,
+      apellidos: formData.apellidos,
+      dpi: formData.dpi,
+      direccion: formData.direccion,
+      telefono: formData.telefono,
+      correo_electronico: formData.email,
+      estado: true
     };
 
     try {
       await apiClient.post("/clientes", payload);
-      setMensaje({ open: true, texto: "¡Cliente guardado!", color: "success" });
-      (e.target as HTMLFormElement).reset();
-      cargarClientes();
+      setOpenCreate(false);
+      showMsg("¡Cliente creado con éxito!", "success");
+      loadClientes(paginationModel.page, paginationModel.pageSize);
     } catch (error: any) {
-      setMensaje({ open: true, texto: procesarError(error), color: "error" });
+      console.error("Error backend:", error.response?.data);
+      setFormError(error.response?.data?.message || "Error al crear. Verifica que el DPI no esté repetido.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // --- 4. ACTUALIZAR (EDITAR) ---
-  const handleEditClick = (cliente: any) => {
-    setSelectedCliente(cliente);
-    setOpenEdit(true);
-  };
-
-  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const payload = {
-      nombres: formData.get("nombres"),
-      apellidos: formData.get("apellidos"),
-      dpi: formData.get("dpi"),
-      direccion: formData.get("direccion"),
-      telefono: formData.get("telefono"),
-      correo_electronico: formData.get("email"),
-    };
-
+  // EDITAR CLIENTE
+  const handleEdit = async () => {
+    if (!selectedCliente) return;
+    setSaving(true);
     try {
-      await apiClient.put(`/clientes/${selectedCliente.id}`, payload);
-      setMensaje({ open: true, texto: "Cliente actualizado", color: "success" });
+      await apiClient.put(`/clientes/${selectedCliente.id}`, {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        dpi: formData.dpi,
+        direccion: formData.direccion,
+        telefono: formData.telefono,
+        correo_electronico: formData.email,
+      });
       setOpenEdit(false);
-      cargarClientes();
+      showMsg("Cliente actualizado", "success");
+      loadClientes(paginationModel.page, paginationModel.pageSize);
     } catch (error: any) {
-      setMensaje({ open: true, texto: procesarError(error), color: "error" });
+      setFormError("Error al actualizar datos.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // --- 5. ELIMINAR ---
-  const eliminarCliente = async (id: number) => {
-    if (!confirm("¿Eliminar este cliente?")) return;
+  // ELIMINAR CLIENTE
+  const handleDelete = async () => {
+    if (!selectedCliente) return;
+    setSaving(true);
     try {
-      await apiClient.delete(`/clientes/${id}`);
-      setMensaje({ open: true, texto: "Cliente eliminado", color: "success" });
-      cargarClientes();
-    } catch (error: any) {
-      setMensaje({ open: true, texto: procesarError(error), color: "error" });
+      await apiClient.delete(`/clientes/${selectedCliente.id}`);
+      setOpenDelete(false);
+      showMsg("Cliente eliminado", "success");
+      loadClientes(paginationModel.page, paginationModel.pageSize);
+    } catch {
+      showMsg("No se pudo eliminar el cliente", "error");
+    } finally {
+      setSaving(false);
     }
   };
+
+  const columns: GridColDef[] = [
+    { field: "dpi", headerName: "DPI", width: 140 },
+    { 
+      field: "nombre_completo", 
+      headerName: "Nombre Completo", 
+      flex: 1, 
+      valueGetter: (p, row) => `${row.nombres || ''} ${row.apellidos || ''}` 
+    },
+    { field: "correo_electronico", headerName: "Email", flex: 1 },
+    { field: "telefono", headerName: "Teléfono", width: 120 },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 110,
+      renderCell: (params) => (
+        <Box>
+          <IconButton size="small" color="primary" onClick={() => {
+            setSelectedCliente(params.row);
+            setFormData({
+              nombres: params.row.nombres,
+              apellidos: params.row.apellidos,
+              dpi: params.row.dpi,
+              direccion: params.row.direccion,
+              telefono: params.row.telefono,
+              email: params.row.correo_electronico
+            });
+            setOpenEdit(true);
+          }}><EditIcon fontSize="small" /></IconButton>
+          <IconButton size="small" color="error" onClick={() => { 
+            setSelectedCliente(params.row); 
+            setOpenDelete(true); 
+          }}><DeleteIcon fontSize="small" /></IconButton>
+        </Box>
+      ),
+    },
+  ];
 
   return (
-    <AppLayout>
-      <Box sx={{ mb: 3 }}>
+    <>
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography variant="h5" fontWeight="bold">Gestión de Clientes</Typography>
+        <Button 
+          variant="contained" 
+          startIcon={<AddIcon />} 
+          onClick={() => {
+            setFormData({ nombres: "", apellidos: "", dpi: "", direccion: "", telefono: "", email: "" });
+            setFormError(null);
+            setOpenCreate(true);
+          }}
+        >
+          Nuevo Cliente
+        </Button>
       </Box>
 
-      {/* Formulario de Registro */}
-      <Paper variant="outlined" sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PersonAddIcon color="primary" /> Nuevo Cliente
-        </Typography>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}><TextField fullWidth label="Nombres" name="nombres" size="small" required /></Grid>
-            <Grid item xs={12} sm={4}><TextField fullWidth label="Apellidos" name="apellidos" size="small" required /></Grid>
-            <Grid item xs={12} sm={4}><TextField fullWidth label="DPI" name="dpi" size="small" required /></Grid>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Dirección" name="direccion" size="small" required /></Grid>
-            <Grid item xs={12} sm={3}><TextField fullWidth label="Email" name="email" type="email" size="small" required /></Grid>
-            <Grid item xs={12} sm={3}><TextField fullWidth label="Teléfono" name="telefono" size="small" required /></Grid>
-            <Grid item xs={12} sx={{ textAlign: 'right' }}>
-              <Button type="submit" variant="contained" disabled={loading}>Guardar</Button>
-            </Grid>
-          </Grid>
-        </form>
+<Paper sx={{ 
+        height: 'calc(100vh - 200px)', // Reduje el descuento de 250 a 200 para que sea más alta
+        width: "100%", 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        boxShadow: 3, // Le da un toque de elevación más elegante
+        borderRadius: 2
+      }}>
+        <DataGrid
+          rows={clientes}
+          columns={columns}
+          loading={loading}
+          rowCount={totalRows}
+          pageSizeOptions={[5, 10, 15, 25, 50, 100]}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          paginationMode="server"
+          disableRowSelectionOnClick
+          // Esto hace que las filas sean un poquito más altas y fáciles de leer
+          getRowHeight={() => 'auto'} 
+          getEstimatedRowHeight={() => 60}
+          sx={{
+            border: 'none',
+            padding: 1,
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#f5f5f5', // Un gris muy tenue para el encabezado
+              color: '#333',
+              fontWeight: 'bold',
+            },
+            '& .MuiDataGrid-cell': {
+              padding: '12px 8px', // Más espacio interno en las celdas
+            },
+            '& .MuiDataGrid-main': { 
+              overflow: 'auto' 
+            },
+          }}
+        />
       </Paper>
 
-      {/* Tabla */}
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-        <Table>
-          <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
-              <TableCell><b>DPI</b></TableCell>
-              <TableCell><b>Nombre</b></TableCell>
-              <TableCell><b>Correo</b></TableCell>
-              <TableCell align="center"><b>Acciones</b></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {fetching ? (
-              <TableRow><TableCell colSpan={4} align="center"><CircularProgress size={20} /></TableCell></TableRow>
-            ) : clientes.map((c: any) => (
-              <TableRow key={c.id}>
-                <TableCell>{c.dpi}</TableCell>
-                <TableCell>{c.nombres} {c.apellidos}</TableCell>
-                <TableCell>{c.correo_electronico}</TableCell>
-                <TableCell align="center">
-                  <IconButton color="primary" onClick={() => handleEditClick(c)}><EditIcon /></IconButton>
-                  <IconButton color="error" onClick={() => eliminarCliente(c.id)}><DeleteIcon /></IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* MODAL DE EDICIÓN */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullWidth maxWidth="sm">
-        <form onSubmit={handleUpdate}>
-          <DialogTitle>Editar Cliente</DialogTitle>
-          <DialogContent dividers>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={6}><TextField fullWidth label="Nombres" name="nombres" defaultValue={selectedCliente?.nombres} required /></Grid>
-              <Grid item xs={6}><TextField fullWidth label="Apellidos" name="apellidos" defaultValue={selectedCliente?.apellidos} required /></Grid>
-              <Grid item xs={6}><TextField fullWidth label="DPI" name="dpi" defaultValue={selectedCliente?.dpi} required /></Grid>
-              <Grid item xs={6}><TextField fullWidth label="Teléfono" name="telefono" defaultValue={selectedCliente?.telefono} required /></Grid>
-              <Grid item xs={12}><TextField fullWidth label="Dirección" name="direccion" defaultValue={selectedCliente?.direccion} required /></Grid>
-              <Grid item xs={12}><TextField fullWidth label="Email" name="email" defaultValue={selectedCliente?.correo_electronico} type="email" required /></Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenEdit(false)}>Cancelar</Button>
-            <Button type="submit" variant="contained" disabled={loading}>Actualizar</Button>
-          </DialogActions>
-        </form>
+      {/* MODAL CREAR */}
+      <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Registrar Nuevo Cliente</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          {formError && <Alert severity="error">{formError}</Alert>}
+          <TextField label="Nombres" fullWidth value={formData.nombres} onChange={(e) => setFormData({...formData, nombres: e.target.value})} />
+          <TextField label="Apellidos" fullWidth value={formData.apellidos} onChange={(e) => setFormData({...formData, apellidos: e.target.value})} />
+          <TextField label="DPI" fullWidth value={formData.dpi} onChange={(e) => setFormData({...formData, dpi: e.target.value})} />
+          <TextField label="Dirección" fullWidth value={formData.direccion} onChange={(e) => setFormData({...formData, direccion: e.target.value})} />
+          <TextField label="Teléfono" fullWidth value={formData.telefono} onChange={(e) => setFormData({...formData, telefono: e.target.value})} />
+          <TextField label="Email" fullWidth value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenCreate(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleCreate} disabled={saving}>
+            {saving ? <CircularProgress size={24} /> : "Guardar"}
+          </Button>
+        </DialogActions>
       </Dialog>
 
-      <Snackbar open={mensaje.open} autoHideDuration={3000} onClose={() => setMensaje({ ...mensaje, open: false })}>
-        <Alert severity={mensaje.color} variant="filled">{mensaje.texto}</Alert>
+      {/* MODAL EDITAR */}
+      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Editar Cliente</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          {formError && <Alert severity="error">{formError}</Alert>}
+          <TextField label="Nombres" fullWidth value={formData.nombres} onChange={(e) => setFormData({...formData, nombres: e.target.value})} />
+          <TextField label="Apellidos" fullWidth value={formData.apellidos} onChange={(e) => setFormData({...formData, apellidos: e.target.value})} />
+          <TextField label="DPI" fullWidth value={formData.dpi} onChange={(e) => setFormData({...formData, dpi: e.target.value})} />
+          <TextField label="Dirección" fullWidth value={formData.direccion} onChange={(e) => setFormData({...formData, direccion: e.target.value})} />
+          <TextField label="Teléfono" fullWidth value={formData.telefono} onChange={(e) => setFormData({...formData, telefono: e.target.value})} />
+          <TextField label="Email" fullWidth value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenEdit(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleEdit} disabled={saving}>Actualizar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* MODAL ELIMINAR */}
+      <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
+        <DialogTitle>¿Confirmar eliminación?</DialogTitle>
+        <DialogContent>Esta acción no se puede deshacer.</DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDelete(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={saving}>Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar 
+        open={mensaje.open} 
+        autoHideDuration={4000} 
+        onClose={() => setMensaje({ ...mensaje, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity={mensaje.color} variant="filled" sx={{ width: '100%' }}>{mensaje.texto}</Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
+}
+
+export default function ClientesPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return <AppLayout><ClientesContent /></AppLayout>;
 }
