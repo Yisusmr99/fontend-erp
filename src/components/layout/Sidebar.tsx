@@ -48,6 +48,11 @@ const NAV_ITEMS: NavItem[] = [
   href: '/clientes',
   },
   {
+    label: 'Cuentas',
+    icon: <PeopleIcon />,
+    href: '/cuentas',
+    },
+  {
     label: 'Usuarios',
     icon: <PeopleIcon />,
     href: '/usuarios',
