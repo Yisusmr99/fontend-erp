@@ -15,6 +15,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,12 +61,14 @@ export default function LoginPage() {
       <Card sx={{ width: "100%", maxWidth: 420 }} elevation={3}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Box
-              component="img"
-              src="/img/logo.png"
-              alt="Derbancks"
-              sx={{ height: 64, objectFit: "contain", mb: 1.5 }}
-            />
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
+              <Image
+                src="/logo-db.png"
+                alt="Logo"
+                width={360}
+                height={100}
+              />
+            </Box>
             <Typography variant="body2" color="text.secondary" mt={0.5}>
               Ingresa tus credenciales para continuar
             </Typography>
