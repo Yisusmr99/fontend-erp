@@ -42,6 +42,11 @@ const NAV_ITEMS: NavItem[] = [
     icon: <DashboardIcon />,
     href: '/',
   },
+    {
+    label: 'Transacciones',
+    icon: <PeopleIcon />,
+    href: '/transacciones',
+  },
   {
   label: 'Clientes',
   icon: <PeopleIcon />,
