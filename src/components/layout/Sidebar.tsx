@@ -19,6 +19,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 
 export const DRAWER_WIDTH = 240;
 export const DRAWER_WIDTH_COLLAPSED = 64;
@@ -42,6 +43,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     icon: <DashboardIcon />,
     href: '/',
+  },
+    {
+    label: 'Transacciones',
+    icon: <CurrencyExchangeIcon />,
+    href: '/transacciones',
   },
   {
   label: 'Clientes',
