@@ -18,6 +18,8 @@ import BuildIcon from '@mui/icons-material/Build';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 
 export const DRAWER_WIDTH = 240;
 export const DRAWER_WIDTH_COLLAPSED = 64;
@@ -43,6 +45,21 @@ const NAV_ITEMS: NavItem[] = [
     href: '/',
   },
   {
+  label: 'Clientes',
+  icon: <PeopleIcon />,
+  href: '/clientes',
+  },
+  {
+    label: 'Cuentas',
+    icon: <AccountBalanceIcon />,
+    href: '/cuentas',
+    },
+  {
+    label: 'Atención al cliente',
+    icon: <SupportAgentIcon />,
+    href: '/atencion-cliente',
+  },
+  {
     label: 'Usuarios',
     icon: <PeopleIcon />,
     href: '/usuarios',
@@ -51,6 +68,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Mantenimiento',
     icon: <BuildIcon />,
     children: [
+      { label: 'Roles', href: '/mantenimiento/roles' },
       { label: 'Configuración', href: '/mantenimiento/configuracion' },
       { label: 'Parámetros', href: '/mantenimiento/parametros' },
     ],

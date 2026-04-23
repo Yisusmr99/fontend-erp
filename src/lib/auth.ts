@@ -1,22 +1,15 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
+import { login, refresh } from "@/lib/api/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/v1";
-const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 horas
+const TOKEN_LIFETIME_MS = 8 * 60 * 60 * 1000; // 8 horas
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const res = await fetch(`${API_URL}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token.accessToken}`,
-      },
-    });
+    const data = await refresh(token.accessToken as string);
 
-    const data = await res.json();
-
-    if (!res.ok || !data.status) throw new Error(data.message ?? "Refresh failed");
+    if (!data.status) throw new Error(data.message ?? "Refresh failed");
 
     return {
       ...token,
@@ -24,7 +17,8 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       accessTokenExpires: Date.now() + TOKEN_LIFETIME_MS,
       error: undefined,
     };
-  } catch {
+  } catch (err) {
+    console.error("❌ refreshAccessToken error:", err);
     return { ...token, error: "RefreshAccessTokenError" };
   }
 }
@@ -40,35 +34,30 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const res = await fetch(`${API_URL}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: credentials.email,
-            password: credentials.password,
-          }),
-        });
+        try {
+          const data = await login(credentials.email, credentials.password);
 
-        const data = await res.json();
+          if (!data.status) return null;
 
-        if (!res.ok || !data.status) return null;
+          const { user, token } = data.data;
 
-        const { user, token } = data.data;
-
-        return {
-          id: String(user.id),
-          name: user.name,
-          email: user.email,
-          roles: user.roles,
-          permissions: user.permissions,
-          accessToken: token,
-        };
+          return {
+            id: String(user.id),
+            name: user.name,
+            email: user.email,
+            roles: user.roles,
+            permissions: user.permissions,
+            accessToken: token,
+          };
+        } catch {
+          return null;
+        }
       },
     }),
   ],
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 horas
+    maxAge: 8 * 60 * 60, // 8 horas
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -93,8 +82,8 @@ export const authOptions: NextAuthOptions = {
         };
       }
 
-      // Token aún vigente
-      if (Date.now() < token.accessTokenExpires) return token;
+      // Token aún vigente (con 2 minutos de margen para renovar antes de que expire)
+      if (Date.now() < (token.accessTokenExpires as number) - 2 * 60 * 1000) return token;
 
       // Token expirado → renovar
       return refreshAccessToken(token);
