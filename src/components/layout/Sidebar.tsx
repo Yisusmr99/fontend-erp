@@ -18,6 +18,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 
 export const DRAWER_WIDTH = 240;
 export const DRAWER_WIDTH_COLLAPSED = 64;
@@ -52,6 +53,11 @@ const NAV_ITEMS: NavItem[] = [
   icon: <PeopleIcon />,
   href: '/clientes',
   },
+  {
+    label: 'Cuentas',
+    icon: <AccountBalanceIcon />,
+    href: '/cuentas',
+    },
   {
     label: 'Usuarios',
     icon: <PeopleIcon />,
