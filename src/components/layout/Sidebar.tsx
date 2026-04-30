@@ -21,6 +21,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 export const DRAWER_WIDTH = 240;
 export const DRAWER_WIDTH_COLLAPSED = 64;
@@ -64,6 +65,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Atención al cliente',
     icon: <SupportAgentIcon />,
     href: '/atencion-cliente',
+  },
+  {
+    label: 'Reportes',
+    icon: <AssessmentIcon />,
+    href: '/reportes',
   },
   {
     label: 'Usuarios',
