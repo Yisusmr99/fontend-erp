@@ -93,7 +93,7 @@ function TransaccionesContent() {
       <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>Operaciones de Caja</Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <FormControl component="fieldset" sx={{ mb: 3 }}>
               <FormLabel>¿Qué desea realizar?</FormLabel>
@@ -109,7 +109,7 @@ function TransaccionesContent() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           {cuentaInfo && (
             <Card sx={{ borderTop: '4px solid #2e7d32' }}>
               <CardContent>

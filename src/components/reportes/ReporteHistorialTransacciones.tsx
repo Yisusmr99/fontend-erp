@@ -195,7 +195,7 @@ export default function ReporteHistorialTransacciones() {
                     <Grid size={{ xs: 12, md: 6 }}>
                         <FormControl fullWidth>
                             <InputLabel>Origen externa</InputLabel>
-                            <Select
+                            <Select<string>
                                 label="Origen externa"
                                 value={
                                     filtros.es_externa === undefined

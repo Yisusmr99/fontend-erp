@@ -188,7 +188,7 @@ export default function ReporteListadoCuentas() {
                     <Grid size={{ xs: 12, md: 2 }}>
                         <FormControl fullWidth>
                             <InputLabel>Estado</InputLabel>
-                            <Select
+                            <Select<string>
                                 label="Estado"
                                 value={
                                     filtros.estado === undefined ? "" : filtros.estado ? "1" : "0"
