@@ -22,6 +22,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
 export const DRAWER_WIDTH = 240;
 export const DRAWER_WIDTH_COLLAPSED = 64;
@@ -72,9 +73,12 @@ const NAV_ITEMS: NavItem[] = [
     href: '/reportes',
   },
   {
-    label: 'Usuarios',
-    icon: <PeopleIcon />,
-    href: '/usuarios',
+    label: 'Administración',
+    icon: <VerifiedUserIcon />,
+    children: [
+      { label: 'Usuarios', href: '/usuarios' },
+      { label: 'Auditoría', href: '/auditoria' },
+    ],
   },
   {
     label: 'Mantenimiento',
