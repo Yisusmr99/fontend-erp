@@ -28,11 +28,13 @@ interface RefreshData {
 // intenta renovar el token desde el jwt callback (server-side).
 
 export async function login(email: string, password: string): Promise<ApiResponse<LoginData>> {
+  console.log("🔐 Login URL:", `${BASE_URL}/auth/login`);
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
+  console.log("🔐 Login status:", res.status);
   if (!res.ok) throw new Error(`Login failed: ${res.status}`);
   return res.json();
 }

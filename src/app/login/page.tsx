@@ -35,6 +35,7 @@ export default function LoginPage() {
       password,
       redirect: false,
     });
+    console.log("result: ", result);
 
     setLoading(false);
 

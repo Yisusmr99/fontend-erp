@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const data = await login(credentials.email, credentials.password);
-
+          console.log("Login response: ", data);
           if (!data.status) return null;
 
           const { user, token } = data.data;
@@ -49,7 +49,8 @@ export const authOptions: NextAuthOptions = {
             permissions: user.permissions,
             accessToken: token,
           };
-        } catch {
+        } catch (err) {
+          console.error("❌ Login error:", err);
           return null;
         }
       },
