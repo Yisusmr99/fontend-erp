@@ -85,8 +85,8 @@ const NAV_ITEMS: NavItem[] = [
     icon: <BuildIcon />,
     children: [
       { label: 'Roles', href: '/mantenimiento/roles' },
-      { label: 'Configuración', href: '/mantenimiento/configuracion' },
-      { label: 'Parámetros', href: '/mantenimiento/parametros' },
+      // { label: 'Configuración', href: '/mantenimiento/configuracion' },
+      // { label: 'Parámetros', href: '/mantenimiento/parametros' },
     ],
   },
 ];
