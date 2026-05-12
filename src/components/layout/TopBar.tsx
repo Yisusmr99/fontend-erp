@@ -84,11 +84,11 @@ export default function TopBar({ sidebarOpen, onMenuClick }: TopBarProps) {
 
         <ModeSwitch />
 
-        <IconButton sx={{ mr: 0.5, color: 'text.secondary' }}>
+        {/* <IconButton sx={{ mr: 0.5, color: 'text.secondary' }}>
           <Badge badgeContent={3} color="secondary">
             <NotificationsIcon />
           </Badge>
-        </IconButton>
+        </IconButton> */}
 
         <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 0.5 }}>
           <Avatar sx={{ width: 34, height: 34, bgcolor: 'secondary.main', fontSize: 16 }}>
