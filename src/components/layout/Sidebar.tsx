@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Typography from '@mui/material/Typography';
@@ -39,42 +40,51 @@ interface NavItem {
   icon: React.ReactNode;
   href?: string;
   children?: NavChild[];
+  roles?: string[];
 }
+
 
 const NAV_ITEMS: NavItem[] = [
   {
     label: 'Dashboard',
     icon: <DashboardIcon />,
     href: '/',
+    roles: ['admin', 'gerente'],
   },
-    {
+  {
     label: 'Transacciones',
     icon: <CurrencyExchangeIcon />,
     href: '/transacciones',
+    roles: ['admin', 'gerente', 'cajero'],
   },
   {
-  label: 'Clientes',
-  icon: <PeopleIcon />,
-  href: '/clientes',
+    label: 'Clientes',
+    icon: <PeopleIcon />,
+    href: '/clientes',
+    roles: ['admin', 'gerente', 'servicio_al_cliente'],
   },
   {
     label: 'Cuentas',
     icon: <AccountBalanceIcon />,
     href: '/cuentas',
-    },
+    roles: ['admin', 'gerente', 'servicio_al_cliente'],
+  },
   {
     label: 'Atención al cliente',
     icon: <SupportAgentIcon />,
     href: '/atencion-cliente',
+    roles: ['admin', 'gerente', 'servicio_al_cliente'],
   },
   {
     label: 'Reportes',
     icon: <AssessmentIcon />,
     href: '/reportes',
+    roles: ['admin', 'gerente'],
   },
   {
     label: 'Administración',
     icon: <VerifiedUserIcon />,
+    roles: ['admin'],
     children: [
       { label: 'Usuarios', href: '/usuarios' },
       { label: 'Auditoría', href: '/auditoria' },
@@ -83,6 +93,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: 'Mantenimiento',
     icon: <BuildIcon />,
+    roles: ['admin'],
     children: [
       { label: 'Roles', href: '/mantenimiento/roles' },
       // { label: 'Configuración', href: '/mantenimiento/configuracion' },
@@ -98,6 +109,13 @@ interface SidebarProps {
 export default function Sidebar({ open }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession();
+  const userRoles = (session?.user?.roles ?? []) as string[];
+
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => !item.roles || item.roles.some((r) => userRoles.includes(r))
+  );
+
   const [expandedItems, setExpandedItems] = useState<string[]>(() =>
     NAV_ITEMS.filter((item) =>
       item.children?.some((c) => pathname.startsWith(c.href))
@@ -181,7 +199,7 @@ export default function Sidebar({ open }: SidebarProps) {
       <Divider />
 
       <List component="nav" sx={{ px: 1, pt: 1 }}>
-        {NAV_ITEMS.map((item) => {
+        {visibleItems.map((item) => {
           const isExpanded = expandedItems.includes(item.label);
           const isActive =
             item.href === '/'

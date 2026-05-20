@@ -65,10 +65,21 @@ export const authOptions: NextAuthOptions = {
       // Primer login: guardamos todo en el JWT
       if (user) {
         const u = user as typeof user & {
-          roles: string[];
-          permissions: string[];
+          roles: unknown;
+          permissions: unknown;
           accessToken: string;
         };
+
+        // El backend puede devolver roles como objeto, array de objetos o array de strings
+        const rawRoles = u.roles;
+        const normalizeRoles = (r: unknown): string[] => {
+          if (!r) return [];
+          if (typeof r === 'string') return [r];
+          if (Array.isArray(r)) return r.map((x) => (typeof x === 'string' ? x : (x as { name: string }).name));
+          if (typeof r === 'object' && 'name' in (r as object)) return [(r as { name: string }).name];
+          return [];
+        };
+
         return {
           ...token,
           accessToken: u.accessToken,
@@ -77,8 +88,8 @@ export const authOptions: NextAuthOptions = {
             id: Number(u.id),
             name: u.name!,
             email: u.email!,
-            roles: u.roles,
-            permissions: u.permissions,
+            roles: normalizeRoles(rawRoles),
+            permissions: Array.isArray(u.permissions) ? u.permissions : [],
           },
         };
       }
