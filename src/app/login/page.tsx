@@ -1,8 +1,16 @@
 'use client';
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+
+function getDefaultRoute(roles: string[]): string {
+  if (roles.includes('admin') || roles.includes('gerente')) return '/';
+  if (roles.includes('cajero')) return '/transacciones';
+  if (roles.includes('servicio_al_cliente')) return '/clientes';
+  if (roles.includes('banco')) return '/sin-acceso';
+  return '/';
+}
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -44,7 +52,9 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
+    const session = await getSession();
+    const roles: string[] = (session?.user as any)?.roles ?? [];
+    router.push(getDefaultRoute(roles));
     router.refresh();
   }
 
