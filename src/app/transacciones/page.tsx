@@ -15,6 +15,7 @@ import {
   ReceiptLong as ReceiptIcon,
   AccountBalance as AccountBalanceIcon,
   SwapHoriz as SwapHorizIcon,
+  Print as PrintIcon,
 } from "@mui/icons-material";
 
 // ─── Tab: Transferencias Locales (depósitos / retiros) ───────────────────────
@@ -175,7 +176,7 @@ function TransferenciasLocalesTab() {
 function AchTab() {
   const [moneda, setMoneda] = useState("Q");
   const [monto, setMonto] = useState("");
-  const [bancoExterno] = useState("exclousitbank");
+  const [bancoExterno, setBancoExterno] = useState("");
   const [cuentaExterna, setCuentaExterna] = useState("");
   const [referencia, setReferencia] = useState("");
   const [numeroCuentaOrigen, setNumeroCuentaOrigen] = useState("");
@@ -199,6 +200,35 @@ function AchTab() {
       else showMsg("Cuenta origen no encontrada.", "error");
     } catch { showMsg("Error al buscar la cuenta.", "error"); }
     finally { setLoadingSearch(false); }
+  };
+
+  const handleImprimirACH = () => {
+    if (!comprobante) return;
+    const ventana = window.open("", "_blank", "width=600,height=650");
+    if (ventana) {
+      ventana.document.write(`
+        <html>
+          <head><title>Comprobante ACH Derbancks</title></head>
+          <body style="font-family: sans-serif; padding: 20px;">
+            <div style="text-align: center;">
+              <h1>Comprobante ACH Derbancks</h1>
+              <p>-----------------------------------</p>
+            </div>
+            <p><strong>Código Confirmación:</strong> ${comprobante.codigo_confirmacion}</p>
+            <p><strong>Fecha:</strong> ${new Date(comprobante.fecha_envio).toLocaleString()}</p>
+            <p><strong>Banco Destino:</strong> ${comprobante.banco_externo}</p>
+            <p><strong>Cuenta Destino:</strong> ${comprobante.cuenta_externa}</p>
+            <hr/>
+            <p><strong>Monto:</strong> ${comprobante.transaccion?.moneda} ${parseFloat(comprobante.transaccion?.monto ?? "0").toFixed(2)}</p>
+            <p><strong>Referencia:</strong> ${comprobante.transaccion?.referencia}</p>
+            <p><strong>Estado Transferencia:</strong> ${comprobante.estado?.toUpperCase()}</p>
+            <p><strong>Estado Transacción:</strong> ${comprobante.transaccion?.estado?.toUpperCase()}</p>
+            <script>window.print();</script>
+          </body>
+        </html>
+      `);
+      ventana.document.close();
+    }
   };
 
   const handleEnviar = async () => {
@@ -289,8 +319,9 @@ function AchTab() {
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Banco Externo</InputLabel>
-              <Select value={bancoExterno} label="Banco Externo" disabled>
+              <Select value={bancoExterno} label="Banco Externo" onChange={(e) => { setBancoExterno(e.target.value); setCuentaExterna(""); }}>
                 <MenuItem value="exclousitbank">ExclusitBank</MenuItem>
+                <MenuItem value="urbank">URBANK</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -356,7 +387,8 @@ function AchTab() {
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ flexDirection: "column", gap: 1, p: 2 }}>
+          <Button onClick={handleImprimirACH} color="primary" variant="outlined" fullWidth startIcon={<PrintIcon />}>Imprimir Comprobante</Button>
           <Button onClick={() => setOpenModal(false)} color="primary" variant="contained" fullWidth>Cerrar</Button>
         </DialogActions>
       </Dialog>
